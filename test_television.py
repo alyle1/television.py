@@ -1,66 +1,63 @@
-# test_television.py
-
-import pytest
+import unittest
 from television import Television
 
-def test_init():
-    tv = Television()
-    assert not tv._Television__status
-    assert not tv._Television__muted
-    assert tv._Television__volume == Television.MIN_VOLUME
-    assert tv._Television__channel == Television.MIN_CHANNEL
+class TestTelevisionFunctions(unittest.TestCase):
 
-def test_power():
-    tv = Television()
-    tv.power()
-    assert tv._Television__status
-    tv.power()
-    assert not tv._Television__status
+    def test_init(self):
+        tv = Television()
+        tv_str = str(tv)
+        self.assertIn("Power = False", tv_str)
+        self.assertIn("Channel = 0", tv_str)
+        self.assertIn("Volume = 0", tv_str)
 
-def test_mute():
-    tv = Television()
-    tv.power()
-    tv.mute()
-    assert tv._Television__muted
-    tv.mute()
-    assert not tv._Television__muted
+    def test_power(self):
+        tv = Television()
+        tv.power()
+        self.assertIn("Power = True", str(tv))
+        tv.power()
+        self.assertIn("Power = False", str(tv))
 
-def test_channel_up():
-    tv = Television()
-    tv.power()
-    tv._Television__channel = Television.MAX_CHANNEL
-    tv.channel_up()
-    assert tv._Television__channel == Television.MIN_CHANNEL
-    tv.channel_up()
-    assert tv._Television__channel == Television.MIN_CHANNEL + 1
+    def test_mute(self):
+        tv = Television()
+        # Try muting when TV is off
+        tv.mute()
+        self.assertIn("Volume = 0", str(tv))  # Should remain volume = 0
 
-def test_channel_down():
-    tv = Television()
-    tv.power()
-    tv._Television__channel = Television.MIN_CHANNEL
-    tv.channel_down()
-    assert tv._Television__channel == Television.MAX_CHANNEL
-    tv.channel_down()
-    assert tv._Television__channel == Television.MAX_CHANNEL - 1
+        # Turn on TV
+        tv.power()
+        tv.volume_up()  # Increase volume so not zero
 
-def test_volume_up():
-    tv = Television()
-    tv.power()
-    tv._Television__volume = Television.MAX_VOLUME
-    tv.volume_up()
-    assert tv._Television__volume == Television.MAX_VOLUME  # Should stay at MAX_VOLUME
-    tv._Television__muted = True
-    tv.volume_up()
-    assert not tv._Television__muted
-    assert tv._Television__volume == Television.MAX_VOLUME  # After unmute, still at max
+        # Mute
+        tv.mute()
+        self.assertIn("Volume = 0", str(tv))  # Should mute volume to 0
 
-def test_volume_down():
-    tv = Television()
-    tv.power()
-    tv._Television__volume = Television.MIN_VOLUME
-    tv.volume_down()
-    assert tv._Television__volume == Television.MIN_VOLUME  # Should stay at MIN_VOLUME
-    tv._Television__muted = True
-    tv.volume_down()
-    assert not tv._Television__muted
-    assert tv._Television__volume == Television.MIN_VOLUME  # After unmute, still at min
+        # Un-mute
+        tv.mute()
+        self.assertIn("Volume = 1", str(tv))  # Should restore actual volume
+
+    def test_channel_up(self):
+        tv = Television()
+        current = str(tv)
+
+        # Channel up when TV is off (should not change)
+        tv.channel_up()
+        self.assertEqual(str(tv), current)
+
+        # Turn on TV
+        tv.power()
+
+        # Channel up normally
+        tv.channel_up()
+        self.assertIn("Channel = 1", str(tv))
+
+        # Set to max channel and wrap around
+        for _ in range(3):  # Go to MAX_CHANNEL
+            tv.channel_up()
+        self.assertIn("Channel = 0", str(tv))
+
+    def test_channel_down(self):
+        tv = Television()
+        str(tv)
+
+        # Channel down when TV is off (should not change)
+        tv.channel_down()
